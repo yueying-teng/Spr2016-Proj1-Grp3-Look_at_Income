@@ -9,4 +9,10 @@ output: html_document
 This is a test to see if the lock on the repository affects uploading a document.
 ```{r}
 library(dplyr)
+
+
+library(data.table)
+
 ```
+
+type
