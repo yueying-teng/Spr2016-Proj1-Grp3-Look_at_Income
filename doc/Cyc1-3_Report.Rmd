@@ -10,6 +10,32 @@ This is a test to see if the lock on the repository affects uploading a document
 ```{r}
 library(dplyr)
 library(data.table)
+library(ggplot2)
+
+# set your local working directory
+
+setwd("~/Downloads/2013-american-community-survey/pums")
+
+# read .csv files and make complete datasets
+
+pdata1 <- fread("ss13pusa.csv")
+pdata2 <- fread("ss13pusb.csv")
+hdata1 <- fread("ss13husa.csv")
+hdata2 <- fread("ss13husb.csv")
+pus <- rbind(pdata1, pdata2)
+hus <- rbind(hdata1, hdata2)
+
+# pick up our predictors and dependent variables
+
+predictors <- select(pus, POBP, WAOB, SEX, AGEP, CIT, ENG, JWMNP,                          SCHL, FOD1P, DIS, RAC1P, VPS)
+income <- select(pus, ADJINC, WAGP, PINCP)
+weight <- select(pus, PWGTP)
+numofchild <- select(hus, NOC, NRC)
+
+#save(predictors, file = "predictors.RData")
+#save(income, file = "income.RData")
+#save(weight, file = "weight.RData")
+#save(numofchild, file = "numofchild.RData")
 ```
 
 Test to see if it changes
