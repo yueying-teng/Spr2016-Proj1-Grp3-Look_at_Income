@@ -1,0 +1,178 @@
+---
+title: "Cyc1-3_Report"
+author: "Team 3"
+date: "January 27, 2016"
+output:
+  html_document:
+    pandoc_args: [
+      "+RTS", "-K64m",
+      "-RTS"
+    ]
+---
+
+Need to adjust income PINCP by ADJINC     7      
+Adjustment factor for income and earnings dollar amounts (6 implied decimal places)
+           1007549 .2013 factor (1.007549)
+
+
+
+This is a test to see if the lock on the repository affects uploading a document.
+```{r warning = FALSE, message=FALSE}
+library(rgl)
+library(knitr)
+knit_hooks$set(webgl = hook_webgl)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(Rmisc)
+library(sitools)
+library(hexbin)
+
+# set your local working directory
+
+#setwd("~/Downloads/2013-american-community-survey/pums")
+setwd("/Users/bobminnich/Documents/Columbia/Courses/Applied_Data_Science/Data")
+
+# read .csv files and make complete datasets
+
+pdata1 <- fread("ss13pusa.csv")
+pdata2 <- fread("ss13pusb.csv")
+pus <- rbind(pdata1, pdata2)
+#hus <- rbind(hdata1, hdata2)
+
+```
+
+```{r}
+pus_work <- select(pus,JWMNP,WKHP,JWDP,JWAP,PINCP,SEX,RAC1P,PWGTP)
+#pus_work$real <- (as.numeric(pus$ADJINC)  * as.numeric(pus$PINCP)+ as.numeric(pus$PINCP)) * as.numeric(pus$PWGTP)
+#pus_work$WKHP <- pus$WKHP* pus$PWGTP/sum(pus$PWGTP)
+#pus_work$JWMNP <- pus$JWMNP* pus$PWGTP/sum(pus$PWGTP)
+
+pus_work <- cbind(pus_work, data.frame(pus)[,204:283])
+#remove NAs for WKHP
+
+na.hrs = which(!(is.na(pus_work$JWMNP)+is.na(pus_work$PINCP)))
+pwork_hrs = data.frame(pus_work[na.hrs,])
+#pwork_hrs$SEX_T[pwork_hrs$SEX == 1] = "M"
+#pwork_hrs$SEX_T[pwork_hrs$SEX == 2] = "F"
+
+```
+
+```{r}
+library(survey)
+df = data.frame(pwork_hrs)
+#add in Weight Columns
+df$RAC1P = factor(df$RAC1P)
+df$SEX = factor(df$SEX)
+
+
+acsdesign<-svrepdesign(weights= ~PWGTP, repweights=df[,9:88], type="BRR", rscale = 4/80,data=df, combined=TRUE)
+
+#summary(svyglm(PINCP ~ SEX + JWMNP + WKHP + RAC1P, design = acsdesign))
+
+WKHP_mean = svymean(~WKHP, acsdesign, na.rm=T)
+WKHP_quant = svyquantile(~WKHP, acsdesign, c(.25,.5,.75), na.rm=T)
+            
+JWMNP_mean = svymean(~JWMNP, acsdesign, na.rm=T)
+JWMNP_quant = svyquantile(~JWMNP, acsdesign, c(.25,.5,.75), na.rm=T)
+
+real_mean = svymean(~PINCP, acsdesign, na.rm=T)
+real_quant = svyquantile(~PINCP, acsdesign, c(.25,.5,.75), na.rm=T)
+
+```
+
+Call:
+svyglm(formula = PINCP ~ SEX + JWMNP + WKHP + RAC1P, design = acsdesign)
+
+Survey design:
+svrepdesign.default(weights = ~PWGTP, repweights = df[, 9:88], 
+    type = "BRR", rscale = 4/80, data = df, combined = TRUE)
+
+Coefficients:
+              Estimate Std. Error  t value Pr(>|t|)    
+(Intercept) -4.891e+03  2.647e+01  -184.79   <2e-16 ***
+SEX2        -1.115e+04  1.159e+01  -961.33   <2e-16 ***
+JWMNP        1.578e+02  3.081e-01   512.23   <2e-16 ***
+WKHP         1.473e+03  5.975e-01  2465.68   <2e-16 ***
+RAC1P2      -1.302e+04  1.557e+01  -836.15   <2e-16 ***
+RAC1P3      -1.552e+04  4.315e+01  -359.60   <2e-16 ***
+RAC1P4      -1.036e+04  3.503e+02   -29.56   <2e-16 ***
+RAC1P5      -1.801e+04  1.086e+02  -165.79   <2e-16 ***
+RAC1P6       7.326e+03  2.939e+01   249.22   <2e-16 ***
+RAC1P7      -1.330e+04  1.364e+02   -97.53   <2e-16 ***
+RAC1P8      -2.208e+04  2.140e+01 -1031.67   <2e-16 ***
+RAC1P9      -9.345e+03  3.457e+01  -270.36   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for gaussian family taken to be 3059869987)
+
+Number of Fisher Scoring iterations: 2
+
+
+```{r warning = FALSE}
+races = c("White","Black","American  Indian","Alaska Native","American and Alaskan ","Asian","Native Hawaiian","Some Other Alone", "Two or More")
+races_num = c(1:9)
+
+pwork_hrs$SEX_T[pwork_hrs$SEX == 1] = "M"
+pwork_hrs$SEX_T[pwork_hrs$SEX == 2] = "F"
+
+
+#p = density(log(pwork_hrs$real))
+#plot(p)
+for (i in seq(0,9,1)){
+    if(i == 0){
+        MainTitle = paste("Density Plots Male (Blue) vs Female (Red) - Total Poplation")
+        plot_df = pwork_hrs
+    }else{
+        MainTitle = paste("Density Plots Male (Blue) vs Female (Red) - ", races[i])
+        plot_df = filter(pwork_hrs, RAC1P == i)
+    }
+
+    #Travel time to work
+  a = ggplot(plot_df, aes(x=JWMNP,fill=factor(SEX_T))) +
+    geom_density(alpha=.4, adjust = 2, trim = FALSE) + 
+    xlab("Minutes of Travel to Work") + 
+    ylab("Density") +
+    xlim(0,75) + 
+    guides(fill=FALSE) + 
+    geom_vline(xintercept = JWMNP_mean[1]) + 
+    geom_vline(xintercept = JWMNP_quant[1:3],colour="green",linetype = "longdash")
+  
+  #Work Hours per Week
+  b = ggplot(plot_df, aes(x=WKHP, fill=factor(SEX_T))) +
+    geom_density(alpha=.4, adjust = 2) +
+    xlim(0,80) + xlab("Work Hours Per Week") + 
+    guides(fill=FALSE)+ 
+    theme(axis.title.y = element_blank()) + 
+    ylim(0,0.1)+
+    geom_vline(xintercept = WKHP_mean[1]) + 
+    geom_vline(xintercept = WKHP_quant[1:3],colour="green",linetype = "longdash")
+  
+  #Personal Income
+  
+  c = ggplot(plot_df, aes(x=PINCP, fill=factor(SEX_T))) +
+    xlab("Personal Income")+ 
+    theme(axis.title.y = element_blank())+
+    geom_density(alpha=.4,adjust=2) +
+    labs(fill = "Sex")+  
+    scale_x_continuous(labels=f2si, limits = c(0,120000)) + 
+    guides(fill=FALSE) +
+    geom_vline(xintercept = real_mean[1]) + 
+    geom_vline(xintercept = real_quant[1:3],colour="green",linetype = "longdash")
+  
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(0.5, 5), "null"))))
+  grid.text(MainTitle, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  print(a, vp = viewport(layout.pos.row = 2, layout.pos.col = 1),newpage=FALSE)
+  print(b, vp = viewport(layout.pos.row = 2, layout.pos.col = 2),newpage=FALSE)
+  print(c, vp = viewport(layout.pos.row = 2, layout.pos.col = 3),newpage=FALSE)
+  popViewport(1)
+}
+```
+
+```{r}
+summary(svyglm(PINCP ~ SEX + JWMNP + WKHP + RAC1P, design = acsdesign))
+```
