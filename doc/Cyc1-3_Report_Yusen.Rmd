@@ -1,0 +1,149 @@
+---
+title: "Cyc1-3_Report"
+author: "Team 3"
+date: "January 27, 2016"
+output: html_document
+---
+
+
+This is a test to see if the lock on the repository affects uploading a document.
+```{r}
+library(dplyr)
+library(data.table)
+library(ggplot2)
+
+# set your local working directory
+
+setwd("~/Downloads/2013-american-community-survey/pums")
+
+# read .csv files and make complete datasets
+
+pdata1 <- fread("ss13pusa.csv")
+pdata2 <- fread("ss13pusb.csv")
+hdata1 <- fread("ss13husa.csv")
+hdata2 <- fread("ss13husb.csv")
+pus <- rbind(pdata1, pdata2)
+hus <- rbind(hdata1, hdata2)
+
+# pick up our predictors and dependent variables
+
+predictors <- select(pus, POBP, WAOB, SEX, AGEP, CIT, ENG, JWMNP, SCHL, FOD1P, DIS, RAC1P, VPS)
+income <- select(pus, ADJINC, WAGP, PINCP)
+#weight <- select(pus, PWGTP)
+#numofchild <- select(hus, NOC, NRC)
+
+#save(predictors, file = "predictors.RData")
+#save(income, file = "income.RData")
+#save(weight, file = "weight.RData")
+#save(numofchild, file = "numofchild.RData")
+```
+
+### We are trying to find out the effect of sex on income.
+
+```{r}
+# Adjust income
+income$real <- as.numeric(income$ADJINC) * 10^(-6) * as.numeric(income$PINCP) 
+# * as.numeric(pus$PWGTP) / sum(as.numeric(pus$PWGTP))
+
+# Collect variables
+income.sex <- as.data.frame(cbind(income$real, predictors$SEX))
+colnames(income.sex) <- c("income", "sex")
+income.sex <- income.sex[which(income.sex$income > 0), ]
+
+# Visualize from a density perspective
+dmale <- density(log10(income.sex[income.sex$sex == 1, ]$income))
+dfemale <- density(log10(income.sex[income.sex$sex == 2, ]$income))
+plot(dmale, main = "The effect of sex on income", col.main = "darkred", xlab = "income (log10 scale)")
+polygon(dmale, col = "#00BFFF55", border = "#00BFFF", lwd = 2)
+polygon(dfemale, col = "#00CD0055", border = "#00CD00",lwd = 2)
+abline(v=seq(-2, 7, by = 1), col = "grey", lty = 2)
+legend("topleft", legend = c("Male", "Female"), fill = c("#00BFFF", "#00CD00"), cex = 1.1, bg = "white")
+```
+
+#### From the plot, we can see that: 
+####- 1. both density distributions of males' income and females' income are left-skewed and have a long tail. 
+####- 2. There are more fluctuations in females' income.
+####- 3. Generally speaking, males have higher income than females. 
+
+### We are trying to find out the effect of age on income.
+
+```{r}
+library(RColorBrewer)
+# Collect variables
+income.age <- as.data.frame(cbind(income$real, predictors$AGEP))
+colnames(income.age) <- c("income", "age")
+income.age <- income.age[which(income.age$income > 0), ]
+income.age$age <- as.numeric(income.age$age)
+income.age <- income.age[which(income.age$age >= 18), ]
+
+# Visualize from a density perspective
+dyouth <- density(log10(income.age[income.age$age >= 18 & income.age$age < 30, ]$income))
+
+dmiddle <- density(log10(income.age[income.age$age >= 30 & income.age$age < 50, ]$income))
+
+dmiddle_aged <- density(log10(income.age[income.age$age >= 50 & income.age$age < 65, ]$income))
+
+daged <- density(log10(income.age[income.age$age >= 65, ]$income))
+
+plot(dmiddle, main = "The effect of age on income", col.main = "darkred", xlab = "income (log10 scale)")
+
+polygon(dyouth, col = "#00BFFF55", border = "#00BFFF", lwd = 2)
+polygon(dmiddle, col = "#00CD0055", border = "#00CD00",lwd = 2)
+polygon(dmiddle_aged, col = "#FB807255", border = "#FB8072",lwd = 2)
+polygon(daged, col = "#FDB46255", border = "#FDB462",lwd = 2)
+
+abline(v=seq(-2, 7, by = 1), col = "grey", lty = 2)
+abline(v = mean(dyouth, rm.na = T), col = "red", lty = 2)
+legend("topleft", legend = c("Youth", "Middle", "Middle_aged", "Aged"), fill = c("#00BFFF", "#00CD00", "#FB8072", "#FDB462"), cex = 1.1, bg = "white")
+```
+
+####- 1. The density function of youth has the lowest peak value and widest distribution, while other three are more centered.
+####- 2. The density functions of middle and middle-aged people are similar.  
+####- 3. Middle and middle-aged people have higher income than youth and aged people.
+
+### Then we draw a boxplot to show the income of every age. 
+
+```{r, fig.width = 12, fig.height = 4.5}
+# Visualize from boxplot.
+boxplot(log10(income.age$income) ~ income.age$age, col="#00BFFF40", main = "Age by income", col.main="darkred", xlab = "age", ylab= "income (log10 scale)", outline=FALSE, cex.axis=0.7, las=2, varwidth=T, border="darkslateblue")
+```
+
+#### We see things are similar with the previous plot. 
+
+```{r}
+#library(googleVis)
+#op <- options(gvis.plot.tag='chart')
+#state <- read.csv("statenames.csv")
+```
+
+
+```{r, results = 'asis', tidy = FALSE}
+#state_income <- as.data.frame(cbind(pus$ST, income$real))
+#colnames(state_income) <- c("ST", "real")
+#state_income <- inner_join(state_income, state, by = c("ST" = "code"))
+#state_income <- state_income[ , 1:3]
+#state_income <- state_income[which(!is.na(state_income$real)), ]
+#mapincome <- group_by(state_income, name) %>% summarise(mean(real))
+#colnames(mapincome) <- c("name", "mean.income")
+#GeoStates <- gvisGeoChart(mapincome, "name", "mean.income",
+#                          options=list(region="US", 
+#                                       displayMode="regions", 
+#                                       resolution="provinces",
+#                                       width=600, height=400))
+#plot(GeoStates)
+# title("income by state")
+```
+
+
+
+
+
+```{r}
+# test data
+#library(survey)
+#pus <- as.data.frame(pus)
+#hus <- as.data.frame(hus)
+#acsdesign <- svrepdesign(weights=~WGTP, repweights=hus[ , 152:231], type="BRR", rscale = 4/80, data=hus, combined=TRUE)
+#svymean(~AGS, acsdesign, na.rm=T) 
+
+```
