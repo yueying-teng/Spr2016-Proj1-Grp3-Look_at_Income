@@ -2,40 +2,219 @@
 title: "Cyc1-3_Report"
 author: "Team 3"
 date: "January 27, 2016"
-output: html_document
+output:
+  html_document:
+    pandoc_args: [
+      "+RTS", "-K64m",
+      "-RTS"
+    ]
 ---
+
+Need to adjust income PINCP by ADJINC     7      
+Adjustment factor for income and earnings dollar amounts (6 implied decimal places)
+           1007549 .2013 factor (1.007549)
+
 
 
 This is a test to see if the lock on the repository affects uploading a document.
-```{r}
+```{r warning = FALSE, message=FALSE}
+library(rgl)
+library(knitr)
+knit_hooks$set(webgl = hook_webgl)
 library(dplyr)
 library(data.table)
 library(ggplot2)
+library(grid)
+library(gridExtra)
+library(Rmisc)
+library(sitools)
+library(hexbin)
 
 # set your local working directory
 
-setwd("~/Downloads/2013-american-community-survey/pums")
+#setwd("~/Downloads/2013-american-community-survey/pums")
+setwd("/Users/bobminnich/Documents/Columbia/Courses/Applied_Data_Science/Data")
 
 # read .csv files and make complete datasets
 
 pdata1 <- fread("ss13pusa.csv")
 pdata2 <- fread("ss13pusb.csv")
 hdata1 <- fread("ss13husa.csv")
-hdata2 <- fread("ss13husb.csv")
+
 pus <- rbind(pdata1, pdata2)
-hus <- rbind(hdata1, hdata2)
 
-# pick up our predictors and dependent variables
-
-predictors <- select(pus, POBP, WAOB, SEX, AGEP, CIT, ENG, JWMNP,                          SCHL, FOD1P, DIS, RAC1P, VPS)
-income <- select(pus, ADJINC, WAGP, PINCP)
-weight <- select(pus, PWGTP)
-numofchild <- select(hus, NOC, NRC)
-
-#save(predictors, file = "predictors.RData")
-#save(income, file = "income.RData")
-#save(weight, file = "weight.RData")
-#save(numofchild, file = "numofchild.RData")
 ```
 
-Test to see if it changes
+    Educational Attainment - SCHL
+  bb .N/A (less than 3 years old)
+  
+Ability to speak English - ENG
+    Ability to speak English
+           b .N/A (less than 5 years old/speaks only English)
+           1 .Very well
+           2 .Well
+           3 .Not well
+           4 .Not at all
+
+Recoded detailed race code - RAC1P
+    Recoded detailed race code
+           1 .White alone                             
+           2 .Black or African American alone         
+           3 .American Indian alone                   
+           4 .Alaska Native alone                     
+           5 .American Indian and Alaska Native tribes specified; or American
+             .Indian or Alaska Native, not specified and no other races
+           6 .Asian alone                             
+           7 .Native Hawaiian and Other Pacific Islander alone
+           8 .Some Other Race alone                   
+           9 .Two or More Races           
+
+Data Dictionary: http://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMSDataDict13.txt
+
+Want to look at hours worked per week vs income
+JWMNP - Travel time to work
+WKHP - Usual hours worked per week past 12 months
+JWDP - Time of departure for work 
+JWAP - Time of Arrival at work
+PINCP - Total person's income (signed)
+```{r}
+library(hexbin)
+pus_work <- select(pus,JWMNP,WKHP,JWDP,JWAP,PINCP,SEX, RAC1P, ENG)
+#remove NAs for WKHP
+
+na.hrs = which(!(is.na(pus_work$JWMNP)+is.na(pus_work$PINCP)))
+pwork_hrs = data.frame(pus_work[na.hrs,])
+pwork_hrs$SEX_T[pwork_hrs$SEX == 1] = "M"
+pwork_hrs$SEX_T[pwork_hrs$SEX == 2] = "F"
+
+
+# a_scatter_m = ggplot(whrs_m,aes(x=JWMNP,y=PINCP,color=factor(SEX_T))) + geom_point(alpha = 0.3) + geom_jitter()
+# b_scatter_f = ggplot(whrs_f,aes(x=JWMNP,y=PINCP,color=factor(SEX_T))) + geom_point(alpha = 0.3) +geom_jitter()
+# 
+# layout_scat <- matrix(c(1, 2), nrow = 2, byrow = TRUE)
+# multiplot(a_scatter_m, b_scatter_f, layout = layout_scat)
+
+```
+
+```{r}
+
+#Double check relationship between Male and Female to confirm that ggplot is working corectly.
+dev.off()
+ggplot(pwork_hrs, aes(PINCP, fill = factor(SEX_T)))+ 
+    geom_bar(aes(y = (..count..)/sum(..count..)),  position = "dodge")+
+    scale_fill_brewer(palette = "Set1") +
+    ggtitle("Males vs Females - Ability to speak English")+xlim(0,75) 
+
+```
+
+
+```{r warning = FALSE}
+races = c("White","Black","American  Indian","Alaska Native","American and Alaskan ","Asian","Native Hawaiian","Some Other Alone", "Two or More")
+races_num = c(1:9)
+
+for (i in seq(0,9,1)){
+    if(i == 0){
+        MainTitle = paste("Density Plots Male (Blue) vs Female (Red) - Total Poplation")
+        plot_df = pwork_hrs
+    }else{
+        MainTitle = paste("Density Plots Male (Blue) vs Female (Red) - ", races[i])
+        plot_df = filter(pwork_hrs, RAC1P == i)
+    }
+
+    #Travel time to work
+  a = ggplot(plot_df, aes(x=JWMNP,fill=factor(SEX_T))) +
+    geom_density(alpha=.4, adjust = 2, trim = FALSE) + xlab("Minutes of Travel to Work") + ylab("Density") +xlim(0,75) + guides(fill=FALSE)
+  
+  #Work Hours per Week
+  b = ggplot(plot_df, aes(x=WKHP, fill=factor(SEX_T))) +
+    geom_density(alpha=.4, adjust = 2) +
+    xlim(0,80) + xlab("Work Hours Per Week") + guides(fill=FALSE)+ theme(axis.title.y = element_blank()) + ylim(0,0.1)
+  
+  #Personal Income
+  
+  c = ggplot(plot_df, aes(x=PINCP, fill=factor(SEX_T))) +
+   xlab("Personal Income")+ theme(axis.title.y = element_blank())+
+    geom_density(alpha=.4,adjust=2) +
+    labs(fill = "Sex")+  scale_x_continuous(labels=f2si, limits = c(0,200000)) + guides(fill=FALSE)
+  
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(0.5, 5), "null"))))
+  grid.text(MainTitle, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  print(a, vp = viewport(layout.pos.row = 2, layout.pos.col = 1),newpage=FALSE)
+  print(b, vp = viewport(layout.pos.row = 2, layout.pos.col = 2),newpage=FALSE)
+  print(c, vp = viewport(layout.pos.row = 2, layout.pos.col = 3),newpage=FALSE)
+  popViewport(1)
+}
+```
+
+
+```{r}
+#ggplot(pwork_hrs,aes(x=JWMNP,y=PINCP))+ geom_jitter(width = 6, alpha = 1/50) + 
+#    ggtitle("Travel Time to Work vs Personal Income")+
+#    xlab("Minutes of Travel to Work")+
+#    ylab("Personal Income")
+
+#ggplot(pwork_hrs,aes(x=WKHP,y=PINCP))+ geom_jitter(width = 6, alpha = 1/50) + 
+#    ggtitle("Travel Time to Work vs Personal Income")+
+#    xlab("Hours Worked per 4")+
+#    ylab("Personal Income")
+#ggsave(filename = "test.png")g
+#ggplot(pwork_hrs,aes(x=WKHP,y=PINCP)) + stat_binhex()
+
+
+```
+
+
+```{r}
+library(rpart)
+library(rpart.plot)
+set.seed(1)
+pwork_hrs_est = pwork_hrs
+pwork_hrs_est$SEX = factor(pwork_hrs$SEX)
+pwork_hrs_est$RAC1P = factor(pwork_hrs$RAC1P)
+
+train_in = sample(c(1:nrow(pwork_hrs)), floor(0.8*nrow(pwork_hrs_est)))
+
+train = pwork_hrs_est[train_in,]
+test = pwork_hrs_est[-train_in,]
+
+fit <- rpart(PINCP ~ SEX + JWMNP + WKHP + RAC1P , data=train, method = "anova")
+#pred <- predict(fit, newdata=test)
+#correct = sum(pred == test$SEX)/nrow(test)
+#print(correct)
+rpart.plot(fit)
+
+
+```
+
+```{r}
+fit = lm(PINCP ~ SEX + JWMNP + WKHP + RAC1P , data=train)
+summary(fit)
+```
+
+
+```{r testgl1, webgl=TRUE, echo = FALSE,  Eval = FALSE, message= FALSE, results="hide", fig.align='center'}
+open3d()
+mfrow3d(1, 2, sharedMouse = TRUE)
+
+colorpal = c("#E41A1C", "#0066ff", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628","#ff37cb","#66ff33", "#00ffff")
+
+for (i in seq(1,2)){
+  plot_df = filter(pwork_hrs, SEX == i)
+  next3d()
+  plot3d(plot_df[,c(1,2,5)],xlab ="Travel time to work", ylab ="Hours/Week", zlab = "Total Income", size = 2, type = "p", col = colorpal[i], zlim =c(0, 1.2*10^6))
+}
+```
+
+
+```{r}
+library(survey)
+hdata1 = data.frame(hdata1)
+acsdesign<-svrepdesign(weights= ~WGTP, repweights=hdata1[,152:231], type="BRR", rscale = 4/80,data=hdata1, combined=TRUE)
+
+df_test = acsdesign$variables
+svymean(~AGS, acsdesign, na.rm=T)
+
+```
+
+xi*wi/sum(wi)
