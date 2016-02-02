@@ -1,0 +1,173 @@
+---
+title: "Cyc1-3_Report_Final"
+author: "Cyc1-3"
+date: "February 2, 2016"
+output: html_document
+---
+
+
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+library(rgl)
+library(knitr)
+#knit_hooks$set(webgl = hook_webgl)
+library(grid)
+library(gridExtra)
+library(Rmisc)
+library(sitools)
+library(hexbin)
+library(dplyr)
+library(data.table)
+library(googleVis)
+library(ggplot2)
+library(RColorBrewer)
+op <- options(gvis.plot.tag='chart')
+```
+
+```{r, echo=FALSE, warning = FALSE, message = FALSE}
+#set local working directory
+
+setwd("~/Downloads/2013-american-community-survey/pums")
+
+# read .csv files and make complete datasets
+
+pdata1 <- fread("ss13pusa.csv", showProgress = FALSE)
+pdata2 <- fread("ss13pusb.csv", showProgress = FALSE)
+pus <- rbind(pdata1, pdata2)
+```
+
+```{r, echo=FALSE}
+# select needed variables
+income <- select(pus, ADJINC, WAGP, PWGTP,PINCP,ST)
+
+# adjust PINCP by ADJINC and create a new column called real for it
+income$real <- as.numeric(income$ADJINC) * 10^(-6)* as.numeric(income$PINCP)
+
+# match ST in income data set to statenames in ST.anno
+income<- tbl_df(income) 
+ST.anno<-read.csv("statenames.csv")
+income <- inner_join(income, ST.anno, by = c("ST" = "code"))
+
+# select adjusted total person income and statename from income dataset
+income2<-select(income,real,name)
+
+# remove all missing values
+income3 <- subset(income2, !is.na(real))
+
+# calculate average adjusted PINCP according to state
+meanincome<-aggregate(real~name, data=income3, FUN=function(income3) c(mean=mean(income3), count=length(income3)))
+```
+
+Average Total Person Income according to States of Residence
+```{r,results='asis',tidy=FALSE, echo = FALSE}
+meanincome$use = meanincome$real[,1]
+GeoStates <- gvisGeoChart(meanincome, "name", "use",
+                          options=list(region="US", 
+                                       displayMode="regions", 
+                                       resolution="provinces",
+                                       width=600, height=400))
+plot(GeoStates)
+```
+
+```{r, echo=FALSE}
+# select needed variables
+relation <- select(pus, POBP,ST, ADJINC, PINCP)
+
+# match ST in relation data set to actual statenames in ST.anno
+relation<- tbl_df(relation) 
+relation <- inner_join(relation, ST.anno, by = c("POBP" = "code"))
+
+# adjust PINCP by ADJINC and create a new column called real for it in relation dataset
+relation$realpobp <- as.numeric(relation$ADJINC) * 10^(-6) * as.numeric(relation$PINCP)
+
+# select adjusted total person income and statename from relation dataset
+relation2<-select(relation,realpobp,name)
+
+# remove all missing values
+relation3 <- subset(relation2, !is.na(realpobp))
+
+# calculate average adjusted PINCP according to individual's birthplace 
+meanincomepobp<-aggregate(realpobp~name, data=relation3, FUN=function(relation3) c(mean=mean(relation3), count=length(relation3)))
+```
+
+Average Total Person Income according to Birthplace
+```{r,results='asis',tidy=FALSE, echo=FALSE}
+meanincomepobp$usepobp = meanincomepobp$realpobp[,1]
+GeoStates2 <- gvisGeoChart(meanincomepobp, "name", "usepobp",
+                          options=list(region="US", 
+                                       displayMode="regions", 
+                                       resolution="provinces",
+                                       width=600, height=400))
+plot(GeoStates2)
+```
+
+##### People live in District of Columbia have the highest average total person income. It is then followed by people from Connecticut, Maryland, New Jersey and Massachusetts. 
+##### The similar pattern can be found in the plot of average total person income according to birthplace except that Maryland is replace by New York and it moves one place up the list. District of Columbia still tops the list. 
+##### In general, people born in the following five places, District of Columbia, Connecticut, Maryland, New York, Massachusetts, are also those who have highest average total person income in adulthoods.
+
+### How does gender influence income?
+
+```{r, echo=FALSE}
+# Collect variables
+income.sex <- as.data.frame(cbind(income$real, pus$SEX))
+colnames(income.sex) <- c("income", "sex")
+income.sex <- income.sex[which(income.sex$income > 0), ]
+
+# Visualize from a density perspective
+dmale <- density(log10(income.sex[income.sex$sex == 1, ]$income))
+dfemale <- density(log10(income.sex[income.sex$sex == 2, ]$income))
+plot(dmale, main = "The effect of sex on income", col.main = "darkred", xlab = "income (log10 scale)")
+polygon(dmale, col = "#00BFFF55", border = "#00BFFF", lwd = 2)
+polygon(dfemale, col = "#00CD0055", border = "#00CD00",lwd = 2)
+abline(v=seq(-2, 7, by = 1), col = "grey", lty = 2)
+legend("topleft", legend = c("Male", "Female"), fill = c("#00BFFF", "#00CD00"), cex = 1.1, bg = "white")
+```
+
+##### From the plot, we can see that: 
+##### - 1. both density distributions of males' income and females' income are left-skewed and have a long tail. 
+##### - 2. There are more fluctuations in females' income.
+##### - 3. Generally speaking, males have higher income than females. 
+
+### How does age influence income?
+
+```{r, echo=FALSE, warning = FALSE, message=FALSE}
+# Collect variables
+income.age <- as.data.frame(cbind(income$real, pus$AGEP))
+colnames(income.age) <- c("income", "age")
+income.age <- income.age[which(income.age$income > 0), ]
+income.age$age <- as.numeric(income.age$age)
+income.age <- income.age[which(income.age$age >= 18), ]
+
+# Visualize from a density perspective
+dyouth <- density(log10(income.age[income.age$age >= 18 & income.age$age < 24, ]$income))
+
+dmiddle <- density(log10(income.age[income.age$age >= 24 & income.age$age < 45, ]$income))
+
+dmiddle_aged <- density(log10(income.age[income.age$age >= 45 & income.age$age < 65, ]$income))
+
+daged <- density(log10(income.age[income.age$age >= 65, ]$income))
+
+plot(dmiddle, main = "The effect of age on income", col.main = "darkred", xlab = "income (log10 scale)")
+
+polygon(dyouth, col = "#00BFFF55", border = "#00BFFF", lwd = 2)
+polygon(dmiddle, col = "#00CD0055", border = "#00CD00",lwd = 2)
+polygon(dmiddle_aged, col = "#FB807255", border = "#FB8072",lwd = 2)
+polygon(daged, col = "#FDB46255", border = "#FDB462",lwd = 2)
+
+abline(v=seq(-2, 7, by = 1), col = "grey", lty = 2)
+abline(v = mean(dyouth, rm.na = T), col = "red", lty = 2)
+legend("topleft", legend = c("18-24 years old", "24-45 years old", "45-65 years old", "above 65 years old"), fill = c("#00BFFF", "#00CD00", "#FB8072", "#FDB462"), cex = 1.1, bg = "white")
+```
+
+##### - 1. The density function of people aged 18-24 years old has the lowest peak value and widest distribution, while the other three are more centered.
+##### - 2. The density functions of people aged 24-45 years old and aged 45-65 years old are similar.  
+##### - 3. People aged 24-45 years old and aged 45-65 years old have higher income than others.
+
+### Then we draw a boxplot to show the income of every age. 
+
+```{r, fig.width = 12, fig.height = 4.5, echo=FALSE}
+# Visualize from boxplot.
+boxplot(log10(income.age$income) ~ income.age$age, col="#00BFFF40", main = "Age by income", col.main="darkred", xlab = "age", ylab= "income (log10 scale)", outline=FALSE, cex.axis=0.7, las=2, varwidth=T, border="darkslateblue")
+```
+
+##### We see things are similar with the previous plot. 
