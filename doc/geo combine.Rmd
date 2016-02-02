@@ -1,0 +1,107 @@
+---
+title: "geo combine"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r}
+#plot of average total person income according to states of residence 
+#plot of average total person income according to birthplace
+
+library(dplyr)
+library(data.table)
+library(googleVis)
+op <- options(gvis.plot.tag='chart')
+```
+
+```{r}
+#set local working directory
+setwd("~/Downloads/2013-american-community-survey/pums")
+# read .csv files and make complete datasets
+pdata1 <- fread("ss13pusa.csv")
+pdata2 <- fread("ss13pusb.csv")
+pus <- rbind(pdata1, pdata2)
+```
+
+```{r}
+# select needed variables
+income <- select(pus, ADJINC, WAGP, PWGTP,PINCP,ST)
+
+# adjust PINCP by ADJINC and create a new column called real for it
+income$real <- as.numeric(income$ADJINC) * 10^(-6)* as.numeric(income$PINCP)
+
+# match ST in income data set to statenames in ST.anno
+income<- tbl_df(income) 
+ST.anno<-read.csv("/Users/yueyingteng/Documents/4249/cycle1-3/data/statenames.csv")
+income <- inner_join(income, ST.anno, by = c("ST" = "code"))
+
+# select adjusted total person income and statename from income dataset
+income2<-select(income,real,name)
+
+# remove all missing values
+income3 <- subset(income2, !is.na(real))
+
+# calculate average adjusted PINCP according to state
+meanincome<-aggregate(real~name, data=income3, FUN=function(income3) c(mean=mean(income3), count=length(income3)))
+```
+
+```{r,results='asis',tidy=FALSE}
+meanincome$use = meanincome$real[,1]
+GeoStates <- gvisGeoChart(meanincome, "name", "use",
+                          options=list(region="US", 
+                                       displayMode="regions", 
+                                       resolution="provinces",
+                                       width=600, height=400))
+plot(GeoStates)
+# Title of plot:"Average Total Person Income according to States of Residence"
+
+```
+
+
+
+```{r}
+# select needed variables
+relation <- select(pus, POBP,ST, ADJINC, PINCP)
+
+# match ST in relation data set to actual statenames in ST.anno
+relation<- tbl_df(relation) 
+ST.anno<-read.csv("/Users/yueyingteng/Documents/4249/cycle1-3/data/statenames.csv")
+relation <- inner_join(relation, ST.anno, by = c("POBP" = "code"))
+
+# adjust PINCP by ADJINC and create a new column called real for it in relation dataset
+relation$realpobp <- as.numeric(relation$ADJINC) * 10^(-6) * as.numeric(relation$PINCP)
+
+# select adjusted total person income and statename from relation dataset
+relation2<-select(relation,realpobp,name)
+
+# remove all missing values
+relation3 <- subset(relation2, !is.na(realpobp))
+
+# calculate average adjusted PINCP according to individual's birthplace 
+meanincomepobp<-aggregate(realpobp~name, data=relation3, FUN=function(relation3) c(mean=mean(relation3), count=length(relation3)))
+```
+
+```{r,results='asis',tidy=FALSE}
+meanincomepobp$usepobp = meanincomepobp$realpobp[,1]
+GeoStates2 <- gvisGeoChart(meanincomepobp, "name", "usepobp",
+                          options=list(region="US", 
+                                       displayMode="regions", 
+                                       resolution="provinces",
+                                       width=600, height=400))
+plot(GeoStates2)
+##Title of plot:"Average Total Person Income according to Birthplace"
+```
+
+```{r}
+# People live in District of Columbia have the highest average total person income. It is then followed by people from Connecticut, Maryland, New Jersey and Massachusetts. 
+# The similar can be found in the plot of average total person income according to birthplace except that Maryland is replace by New York and it moves one place up the list. District of Columbia still tops the list. 
+# In general, people born in the following five places, District of Columbia, Connecticut, Maryland, New York, Massachusetts, are those who have highest average total person income.
+
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
