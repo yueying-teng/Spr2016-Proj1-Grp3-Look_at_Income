@@ -96,12 +96,12 @@ plot(GeoStates2)
 ##Title of plot:"Average Total Person Income according to Birthplace"
 ```
 
-```{r}
-# People live in District of Columbia have the highest average total person income. It is then followed by people from Connecticut, Maryland, New Jersey and Massachusetts. 
-# The similar can be found in the plot of average total person income according to birthplace except that Maryland is replace by New York and it moves one place up the list. District of Columbia still tops the list. 
-# In general, people born in the following five places, District of Columbia, Connecticut, Maryland, New York, Massachusetts, are those who have highest average total person income.
 
-```
+##### People live in District of Columbia have the highest average total person income. It is then followed by people from Connecticut, Maryland, New Jersey and Massachusetts. 
+##### The similar pattern can be found in the plot of average total person income according to birthplace except that Maryland is replace by New York and it moves one place up the list. District of Columbia still tops the list. 
+##### In general, people born in the following five places, District of Columbia, Connecticut, Maryland, New York, Massachusetts, are also those who have highest average total person income in adulthoods.
+
+
 
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
