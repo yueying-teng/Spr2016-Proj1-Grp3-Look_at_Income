@@ -1,11 +1,11 @@
 ---
 title: "Disparities of Personal Income"
-subtitle: 'Invesitgation of the affects of Location, Age, Sex, Race, Workhours and Travel Time on Personal Income'
+subtitle: 'Invesitgation of the affects of Location, Age, Sex, Race,Secondary Education, Disability, Work Hours and Travel Time on Personal Income'
 author: "Team:Keep Calm and Restart R"
 date: "February 2, 2016"
 output: html_document
 --- 
-Throughout this report we will investigate many parameters on income. We are utilizing the American Community Survey (ACS), which was conducted to represent approximately 3.5 million households per year. Here we will investigate the specific attributes of Location, Race,Sex,Work Hours,Travel Time to Work and their affects on Person's Total Income. We will show patters observed along with several conclusions from the data. 
+Throughout this report we will investigate many parameters on income. We are utilizing the American Community Survey (ACS), which was conducted to represent approximately 3.5 million households per year. Here we will investigate the specific attributes of Location, Age, Sex, Race,Secondary Education, Disability, Work Hours and Travel Time and their affects on Person's Total Income. We will show patters observed along with several conclusions from the data. 
 
 <div style="text-align: center;"><IMG SRC="Dilbert.gif" ALT="image", width="500"></div>
 
@@ -13,7 +13,6 @@ Throughout this report we will investigate many parameters on income. We are uti
 ```{r, echo=FALSE, warning = FALSE, message=FALSE}
 library(rgl)
 library(knitr)
-#knit_hooks$set(webgl = hook_webgl)
 library(grid)
 library(gridExtra)
 library(Rmisc)
@@ -130,10 +129,10 @@ abline(v=seq(-2, 7, by = 1), col = "grey", lty = 2)
 legend("topleft", legend = c("Male", "Female"), fill = c("#00BFFF", "#00CD00"), cex = 1.1, bg = "white")
 ```
 
-##### From the plot, we can see that: 
-##### - 1. both density distributions of males' income and females' income are left-skewed and have a long tail. 
-##### - 2. There are more fluctuations in females' income.
-##### - 3. Generally speaking, males have higher income than females. 
+From the plot, we can see that: 
+- 1. both density distributions of males' income and females' income are left-skewed and have a long tail. 
+- 2. There are more fluctuations in females' income.
+- 3. Generally speaking, males have higher income than females. 
 
 ### How does age influence income?
 
@@ -179,6 +178,79 @@ boxplot(log10(income.age$income) ~ income.age$age, col="#00BFFF40", main = "Age 
 
 We see things are similar with the previous plot. 
 
+### How does disability and Degree Field affect Personal Income?
+
+Degree Field
+
+```{r,results='asis',tidy=FALSE, echo=FALSE, fig.align='left'}
+
+popul_simp=select(pus, PINCP,FOD1P)
+populfod1 <-popul_simp %>%
+  na.omit() %>%
+  group_by(FOD1P) %>% 
+  mutate(meanIncome = mean(PINCP))
+head(populfod1$meanIncome)
+
+fod=distinct(select(populfod1, FOD1P,meanIncome))
+fod$xaxis=seq(1,173)
+
+library(googleVis)
+
+edu<-read.csv("EducationListCSV.csv", header = FALSE)
+colnames(edu) = c("index", "id", "job")
+edu = edu[,-c(1,4,5),]
+fod <- inner_join(edu,fod , by = c("id" = "FOD1P"))
+library(googleVis)
+
+Bubble <- gvisBubbleChart(fod, idvar = "job", xvar = "xaxis", 
+                          yvar = "meanIncome", 
+                          colorvar = "meanIncome", sizevar = "meanIncome", 
+                          chartid = "Bubble_Chart", options = list(colorAxis = "{colors: ['lightblue', 'blue']}", 
+                          vAxis = "{title:'Mean Income'}", hAxis = "{title:'First Entry'}", 
+                         width = 1000, height = 1000, bubble = "{textStyle:{color: 'none',fontName: 'Times-Roman', fontSize:9}}",                                                                    explorer = "{actions: ['dragToZoom', 'rightClickToReset'] }",
+                         title = "Mean Income Bubble Chart"))
+plot(Bubble)
+plot(Bubble)
+```
+<br />
+
+According to the Bubble plot, people in the field of petroleum engineering(“2419”), health and medical preparatory programs(“6106”), and nuclear engineering(“2418”) have the highest mean income.
+ 
+On the other hand, those in the field of miscellaneous fine arts(“6099”) and early childhood eduction(“2307”) usually earn the least income.
+
+Next is about disability
+
+```{r,results='asis',tidy=FALSE, echo=FALSE, fig.align='center'}
+
+DIS=select(pus, PINCP,DIS)
+
+#Check for NAs
+na.check = DIS%>%
+  is.na() %>%
+  apply(2,sum)
+
+#Calculate % of NA
+percentDIS = na.check/nrow(DIS)
+percentDIS 
+
+dis.na<-DIS %>%
+  na.omit() %>%
+  group_by(DIS) %>% 
+  mutate(meanIncome = mean(PINCP))
+
+dischart=distinct(select(dis.na, DIS,meanIncome))
+head(dischart)
+dischart$legend=c("Without a disbility", "With a disbility")
+
+ggplot(data=dischart, aes(x=legend, y=meanIncome, fill=DIS)) + 
+  geom_bar(colour="black", fill="#DD8888", width=.5, stat="identity") + 
+  guides(fill=FALSE) +
+  xlab("Disability") + ylab("Mean Income") +
+  ggtitle("Income difference")
+```
+<br />
+
+So we can see people with out a disbility can eran much more than those with a disability
 
 ```{r, echo=FALSE}
 #Select Specific Columns
