@@ -1,0 +1,68 @@
+---
+title: "Cyc1-3_Report Ding"
+author: "Thomas"
+date: "February 2, 2016"
+output: html_document
+---
+
+In the next section, we are talking about the effects of "Recoded field of degree - first entry" and "Disability" on Income.
+  
+```{r warning = FALSE, message=FALSE} 
+
+popul_simp=select(pus, PINCP,FOD1P)
+populfod1 <-popul_simp %>%
+  na.omit() %>%
+  group_by(FOD1P) %>% 
+  mutate(meanIncome = mean(PINCP))
+head(populfod1$meanIncome)
+
+fod=distinct(select(populfod1, FOD1P,meanIncome))
+fod$xaxis=seq(1,173)
+
+library(googleVis)
+
+Bubble <- gvisBubbleChart(fod, idvar = "FOD1P", xvar = "xaxis", 
+                          yvar = "meanIncome", 
+                          colorvar = "meanIncome", sizevar = "meanIncome", 
+                          chartid = "Bubble_Chart", options = list(colorAxis = "{colors: ['lightblue', 'blue']}", 
+                          vAxis = "{title:'Mean Income'}", hAxis = "{title:'First Entry'}", 
+                         width = 1700, height = 1000, bubble = "{textStyle:{color: 'blue',fontName: 'Times-Roman', fontSize:9}}",                                                                    explorer = "{actions: ['dragToZoom', 'rightClickToReset'] }",
+                         title = "Mean Income Bubble Chart"))
+plot(Bubble)
+```
+
+
+Next is about disability
+
+```{r}
+
+DIS=select(pus, PINCP,DIS)
+
+#Check for NAs
+na.check = DIS%>%
+  is.na() %>%
+  apply(2,sum)
+
+#Calculate % of NA
+percentDIS = na.check/nrow(DIS)
+percentDIS 
+
+dis.na<-DIS %>%
+  na.omit() %>%
+  group_by(DIS) %>% 
+  mutate(meanIncome = mean(PINCP))
+
+dischart=distinct(select(dis.na, DIS,meanIncome))
+head(dischart)
+dischart$legend=c("Without a disbility", "With a disbility")
+
+ggplot(data=dischart, aes(x=legend, y=meanIncome, fill=DIS)) + 
+  geom_bar(colour="black", fill="#DD8888", width=.5, stat="identity") + 
+  guides(fill=FALSE) +
+  xlab("Disability") + ylab("Mean Income") +
+  ggtitle("Income difference")
+```
+
+
+
+So we can see people with out a disbility can eran much more than those with a siability.
