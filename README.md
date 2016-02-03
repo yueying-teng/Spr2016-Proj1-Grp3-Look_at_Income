@@ -16,5 +16,7 @@ proj/
 
 Please see each subfolder for a README file.
 
+Project Website:
 http://tzstatsads.github.io/cycle1-3/
 
+Team Members: Bob Minnich, Yueying Teng, Yusen Wang, Tianhong Ding
