@@ -73,7 +73,7 @@ GeoStates <- gvisGeoChart(meanincome, "name", "use",
                                        width=600, height=400))
 plot(GeoStates)
 ```
-
+![fig1](https://github.com/TZstatsADS/cycle1-3/blob/master/figs/fig1.Average%20Total%20Person%20Income%20according%20to%20States%20of%20Residence.png)
 
 ```{r, echo=FALSE}
 # select needed variables
