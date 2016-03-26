@@ -31,9 +31,9 @@ Summary: In this project, we investigated the American Community Survey and the 
 [Contribution Statement]
 
 Bob Minnich contributed with the following:
-○ Investigated Density Plot Comparisons Between multiple races looking at Minutes Traveled to Work, Work Hours Per Week and Personal Income. 
-○ Used weights to determine the population means, averages, standard deviations to allow statistical comparisons of races vs the population statistics
-○ Looked at differences between Male and female within all of these splits
-○ Used linear regression to solidify inferences made from visual plots by confirming effects of race and sex on Income within the United States.
-○ Assisted with bubble plot naming of jobs when using mouse hover 
+*Investigated Density Plot Comparisons Between multiple races looking at Minutes Traveled to Work, Work Hours Per Week and Personal Income. 
+*Used weights to determine the population means, averages, standard deviations to allow statistical comparisons of races vs the population statistics
+*Looked at differences between Male and female within all of these splits
+*Used linear regression to solidify inferences made from visual plots by confirming effects of race and sex on Income within the United States.
+*Assisted with bubble plot naming of jobs when using mouse hover 
 Compiled report and prepared presentation.
