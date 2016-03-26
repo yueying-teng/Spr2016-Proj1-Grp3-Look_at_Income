@@ -41,7 +41,7 @@ Compiled report and prepared presentation.
 Yusen Wang contributed with the following:
 * Focused on finding how gender and age influence income within the United States. 
 * Used polygon plot to compare males' and females' income.
-* Analysized skewness and tail of males' and females' income density distribution in a log scale.
+* Analyzed  skewness and tail of males' and females' income density distribution in a log scale.
 * Split people who have income records into different groups based on age.
-* Used polygon plot to analysize similarities and differences among all groups. 
+* Used polygon plot to analyze  similarities and differences among all groups. 
 * Drew boxplot to show income of every age to prove previous findings. 
