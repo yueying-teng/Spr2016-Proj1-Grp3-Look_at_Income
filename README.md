@@ -17,7 +17,7 @@ proj/
 Please see each subfolder for a README file.
 
 Project Website:
-http://tzstatsads.github.io/cycle1-3/
+https://github.com/TZstatsADS/ProjectACS-s16c1t3-Look_at_Income
 
 Team Members: Bob Minnich, Yueying Teng, Yusen Wang, Tianhong Ding
 
