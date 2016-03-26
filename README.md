@@ -24,7 +24,7 @@ Team Members: Bob Minnich, Yueying Teng, Yusen Wang, Tianhong Ding
 
 Project 1 - Team 3
 
-Team members: Bob Minnich
+Team members: Bob Minnich, Yusen Wang
 
 Summary: In this project, we investigated the American Community Survey and the affects of Location, Age, Sex, Race,Secondary Education, Disability, Work Hours and Travel Time on Personal Income.
 
@@ -37,3 +37,11 @@ Bob Minnich contributed with the following:
 * Used linear regression to solidify inferences made from visual plots by confirming effects of race and sex on Income within the United States.
 * Assisted with bubble plot naming of jobs when using mouse hover 
 Compiled report and prepared presentation.
+
+Yusen Wang contributed with the following:
+* Focused on finding how gender and age influence income within the United States. 
+* Used polygon plot to compare males' and females' income.
+* Analysized skewness and tail of males' and females' income density distribution in a log scale.
+* Split people who have income records into different groups based on age.
+* Used polygon plot to analysize similarities and differences among all groups. 
+* Drew boxplot to show income of every age to prove previous findings. 
