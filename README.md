@@ -45,3 +45,8 @@ Yusen Wang contributed with the following:
 * Split people who have income records into different groups based on age.
 * Used polygon plot to analyze  similarities and differences among all groups. 
 * Drew boxplot to show income of every age to prove previous findings. 
+
+Yueying Teng contributed with the following:
+* Proposed the topic of income analysis and worked with the rest of the team to identify the variables of interests.
+* Investigated the influence of geographical factors such as birth place and place of residence on average personal income.
+* Used googleVis to visualize average personal income according to birth place and state of residence.
