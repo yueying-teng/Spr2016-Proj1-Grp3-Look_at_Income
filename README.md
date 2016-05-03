@@ -50,3 +50,8 @@ Yueying Teng contributed with the following:
 * Proposed the topic of income analysis and worked with the rest of the team to identify the variables of interests.
 * Investigated the influence of geographical factors such as birth place and place of residence on average personal income.
 * Used googleVis to visualize average personal income according to birth place and state of residence.
+
+Tianhong Ding contributed with the following:
+* Explored the topic such as people's residence are related to their orginal nationality.
+* Investigated the relationship between people's income and their first entry into the field. Use bubble plot to visualize it.
+* Investigated the relationship between people's income and disbility. Use Bar plot to visualize it.
