@@ -1,4 +1,4 @@
-# Project: Analysis of 2013 American Community Survey data 
+## Project: Analysis of 2013 American Community Survey data 
 
 Term: Spring 2016, First project
 Team Members: Bob Minnich, Yueying Teng, Yusen Wang, Tianhong Ding
@@ -6,7 +6,7 @@ Team Members: Bob Minnich, Yueying Teng, Yusen Wang, Tianhong Ding
 
 Summary: In this project, we investigated the 2013 American Community Survey data and the affects of Location, Age, Sex, Race,Secondary Education, Disability, Work Hours and Travel Time on Personal Income.
 
-Exploratory Data Analysis 
+#### Exploratory Data Analysis 
 - Two choropleth maps: one is of average personal income against birth place and the other is against place of residence
 
 - Density Plot Comparisons Between multiple races on Minutes Traveled to Work, Work Hours Per Week and Personal Income for both Male and female gender groups. 
@@ -16,7 +16,7 @@ Exploratory Data Analysis
 - Boxplot of income from different age groups  
 
 
-Solidify inference from Exploratory Data Analysis 
+#### Solidify inference from Exploratory Data Analysis 
 - Linear regression to solidify inferences made from visual plots, which confirms the effects of race and sex on income within the United States.
 
 
